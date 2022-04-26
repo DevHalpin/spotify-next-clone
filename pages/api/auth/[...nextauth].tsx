@@ -33,7 +33,7 @@ const refreshAccessToken = async (token: any) => {
       refreshToken: refreshedToken.refresh_token ?? token.refreshToken,
     }
   } catch (error) {
-    console.log(error)
+    console.log('Error', error)
 
     return {
       ...token,
@@ -117,7 +117,7 @@ export default NextAuth({
     // async redirect({ url, baseUrl }) { return baseUrl },
     async session({ session, token }: SpotifyTokenInterface) {
       if (session.user) {
-        session.user.accessToken = token.access_token as string
+        session.user.accessToken = token.accessToken as string
         session.user.refreshToken = token.refreshToken as string
         session.user.username = token.username as string
       }

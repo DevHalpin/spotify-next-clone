@@ -4,7 +4,6 @@ import { getProviders, signIn } from 'next-auth/react'
 const Login = ({
   providers,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
-  console.log(providers)
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-black">
       <img className="mb-5 w-52" src="/Spotify-Logo.png" alt="Spotify Logo" />
