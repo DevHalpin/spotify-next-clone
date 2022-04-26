@@ -5,8 +5,13 @@ import {
   PlusCircleIcon,
   SearchIcon,
 } from '@heroicons/react/outline'
+import { useSession } from 'next-auth/react'
 
 const Sidebar = () => {
+  const { data: session, status } = useSession()
+
+  console.log(session)
+
   return (
     <div className="border-gray-800 p-5 text-sm text-gray-600">
       <div className="space-y-4">
