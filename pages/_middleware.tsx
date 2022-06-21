@@ -19,7 +19,7 @@ export async function middleware(req: NextApiRequestCustom) {
 
   if (
     !token &&
-    pathname !== '/login' &&
+    pathname !== url.pathname &&
     !PUBLIC_FILE.test(req.nextUrl.pathname)
   )
     return NextResponse.redirect(url)
