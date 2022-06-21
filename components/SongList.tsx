@@ -5,6 +5,7 @@ import Song from './Song'
 
 interface Track {
   track: {
+    uri: string
     duration_ms: number
     id: string
     artists: {
@@ -24,7 +25,7 @@ interface Track {
   }
 }
 
-export default function Songs() {
+export default function SongList() {
   const playlist = useRecoilValue<any>(playlistState)
   return (
     <div className="flex flex-col space-y-1 px-8 text-white">
