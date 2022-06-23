@@ -30,7 +30,7 @@ export default function SongList() {
   return (
     <div className="flex flex-col space-y-1 px-8 text-white">
       {playlist?.tracks.items.map((track: Track, index: number) => (
-        <Song key={track.track.id} track={track} order={index} />
+        <Song key={`${track.track.id}${index}`} track={track} order={index} />
       ))}
     </div>
   )

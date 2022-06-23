@@ -1,8 +1,9 @@
 import React from 'react'
-import { useRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue } from 'recoil'
 import useSpotify from '../hooks/useSpotify'
 import { millisToMinutesAndSeconds } from '../lib/time'
 import { currentTrackIdState, isPlayingState } from '../atoms/songAtom'
+import { playlistIdState } from '../atoms/playlistAtom'
 
 interface trackProps {
   track: {
@@ -37,11 +38,17 @@ export default function Song({
   const [currentTrackId, setCurrentTrackId] =
     useRecoilState<any>(currentTrackIdState)
   const [isPlaying, setIsPlaying] = useRecoilState(isPlayingState)
+  const currentPlaylistId = useRecoilValue(playlistIdState)
 
   const playSong = () => {
     setCurrentTrackId(track.track.id)
     setIsPlaying(true)
-    spotifyApi.play({ uris: [track.track.uri] })
+    spotifyApi.play({
+      context_uri: `spotify:playlist:${currentPlaylistId}`,
+      offset: {
+        position: order,
+      },
+    })
   }
   return (
     <div

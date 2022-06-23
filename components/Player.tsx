@@ -28,16 +28,16 @@ export default function Player() {
   const songInfo = useSongInfo()
 
   const fetchCurrentTrack = () => {
-    if (!songInfo) {
-      spotifyApi.getMyCurrentPlayingTrack().then((res) => {
-        console.log('Now Playing: ', res.body?.item)
-        setCurrentTrackId(res.body?.item?.id)
+    // if (!songInfo) {
+    spotifyApi.getMyCurrentPlayingTrack().then((res) => {
+      console.log('Now Playing: ', res.body?.item)
+      setCurrentTrackId(res.body?.item?.id)
 
-        spotifyApi.getMyCurrentPlaybackState().then((res) => {
-          setIsPlaying(res.body?.is_playing)
-        })
+      spotifyApi.getMyCurrentPlaybackState().then((res) => {
+        setIsPlaying(res.body?.is_playing)
       })
-    }
+    })
+    // }
   }
 
   const handlePlayPause = () => {
@@ -73,6 +73,7 @@ export default function Player() {
       setVolume(50)
     }
   }, [currentTrackId, spotifyApi, session])
+
   return (
     <div className="grid h-24 grid-cols-3 bg-gradient-to-b from-black to-gray-900 px-2 text-xs text-white md:px-8 md:text-base">
       {/* Left */}
@@ -98,10 +99,12 @@ export default function Player() {
         />
         <RewindIcon
           className="button"
-          onClick={() =>
-            // spotifyApi.skipToPrevious().catch((err) => console.log(err))
-            alert('Not implemented')
-          }
+          onClick={() => {
+            spotifyApi
+              .skipToPrevious()
+              .then(() => setTimeout(() => fetchCurrentTrack(), 500))
+              .catch((err) => console.log(err))
+          }}
         />
         {isPlaying ? (
           <PauseIcon onClick={handlePlayPause} className="button h-10 w-10" />
@@ -110,10 +113,12 @@ export default function Player() {
         )}
         <FastForwardIcon
           className="button"
-          onClick={() =>
-            // spotifyApi.skipToNext().catch((err) => console.log(err))
-            alert('Not implemented')
-          }
+          onClick={() => {
+            spotifyApi
+              .skipToNext()
+              .then(() => setTimeout(() => fetchCurrentTrack(), 500))
+              .catch((err) => console.log(err))
+          }}
         />
         <ReplyIcon
           className="button"
