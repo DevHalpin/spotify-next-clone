@@ -28,13 +28,12 @@ export default function Player() {
   const songInfo = useSongInfo()
 
   const fetchCurrentTrack = () => {
-    // if (!songInfo) {
     spotifyApi.getMyCurrentPlayingTrack().then((res) => {
-      console.log('Now Playing: ', res.body?.item)
-      setCurrentTrackId(res.body?.item?.id)
-
+      if (res.body.item?.id) {
+        setCurrentTrackId(res.body.item.id)
+      }
       spotifyApi.getMyCurrentPlaybackState().then((res) => {
-        setIsPlaying(res.body?.is_playing)
+        setIsPlaying(res.body.is_playing)
       })
     })
     // }
@@ -81,10 +80,19 @@ export default function Player() {
 
   useEffect(() => {
     if (spotifyApi.getAccessToken() && !currentTrackId) {
+      console.log('No current track, fetching...')
       fetchCurrentTrack()
       setVolume(50)
     }
   }, [currentTrackId, spotifyApi, session])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('Syncing devices...')
+      fetchCurrentTrack()
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className="grid h-24 grid-cols-3 bg-gradient-to-b from-black to-gray-900 px-2 text-xs text-white md:px-8 md:text-base">
