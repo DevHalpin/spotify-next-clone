@@ -43,20 +43,32 @@ export default function Player() {
   const handlePlayPause = () => {
     spotifyApi.getMyCurrentPlaybackState().then((res) => {
       if (res.body?.is_playing) {
-        spotifyApi.pause().then(() => {
-          setIsPlaying(false)
-        })
+        spotifyApi
+          .pause()
+          .then(() => {
+            setIsPlaying(false)
+          })
+          .catch((err) => {
+            console.log('Something went wrong!', err)
+          })
       } else {
-        spotifyApi.play().then(() => {
-          setIsPlaying(true)
-        })
+        spotifyApi
+          .play()
+          .then(() => {
+            setIsPlaying(true)
+          })
+          .catch((err) => {
+            console.log('Something went wrong!', err)
+          })
       }
     })
   }
 
   const debouncedAdjustVolume = React.useCallback(
     debounce((volume) => {
-      spotifyApi.setVolume(volume).catch((err) => {})
+      spotifyApi.setVolume(volume).catch((err) => {
+        console.log('Something went wrong!', err)
+      })
     }, 500),
     []
   )
@@ -73,13 +85,14 @@ export default function Player() {
       setVolume(50)
     }
   }, [currentTrackId, spotifyApi, session])
+
   return (
     <div className="grid h-24 grid-cols-3 bg-gradient-to-b from-black to-gray-900 px-2 text-xs text-white md:px-8 md:text-base">
       {/* Left */}
       <div className="flex items-center space-x-4">
         <img
           className="hidden h-10 w-10 md:inline"
-          src={songInfo?.album.images?.[0].url}
+          src={songInfo?.album?.images?.[0].url}
           alt=""
         />
         <div>
