@@ -43,20 +43,32 @@ export default function Player() {
   const handlePlayPause = () => {
     spotifyApi.getMyCurrentPlaybackState().then((res) => {
       if (res.body?.is_playing) {
-        spotifyApi.pause().then(() => {
-          setIsPlaying(false)
-        })
+        spotifyApi
+          .pause()
+          .then(() => {
+            setIsPlaying(false)
+          })
+          .catch((err) => {
+            console.log('Something went wrong!', err)
+          })
       } else {
-        spotifyApi.play().then(() => {
-          setIsPlaying(true)
-        })
+        spotifyApi
+          .play()
+          .then(() => {
+            setIsPlaying(true)
+          })
+          .catch((err) => {
+            console.log('Something went wrong!', err)
+          })
       }
     })
   }
 
   const debouncedAdjustVolume = React.useCallback(
     debounce((volume) => {
-      spotifyApi.setVolume(volume).catch((err) => {})
+      spotifyApi.setVolume(volume).catch((err) => {
+        console.log('Something went wrong!', err)
+      })
     }, 500),
     []
   )
@@ -80,7 +92,7 @@ export default function Player() {
       <div className="flex items-center space-x-4">
         <img
           className="hidden h-10 w-10 md:inline"
-          src={songInfo?.album.images?.[0].url}
+          src={songInfo?.album?.images?.[0].url}
           alt=""
         />
         <div>
