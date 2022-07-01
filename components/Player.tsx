@@ -12,7 +12,8 @@ import {
 } from '@heroicons/react/solid'
 import { debounce } from 'lodash'
 import { useSession } from 'next-auth/react'
-import React, { useEffect } from 'react'
+import Image from 'next/image'
+import React, { useCallback, useEffect } from 'react'
 import { useRecoilState } from 'recoil'
 import { currentTrackIdState, isPlayingState } from '../atoms/songAtom'
 import useSongInfo from '../hooks/useSongInfo'
@@ -23,39 +24,29 @@ export default function Player() {
   const { data: session, status } = useSession()
   const [currentTrackId, setCurrentTrackId] =
     useRecoilState<any>(currentTrackIdState)
-  const [isPlaying, setIsPlaying] = useRecoilState(isPlayingState)
-  const [volume, setVolume] = React.useState(50)
-  const songInfo = useSongInfo()
 
-  const fetchCurrentTrack = () => {
-    spotifyApi.getMyCurrentPlayingTrack().then((res) => {
-      if (res.body.item?.id) {
-        setCurrentTrackId(res.body.item.id)
-      }
-      spotifyApi.getMyCurrentPlaybackState().then((res) => {
-        setIsPlaying(res.body.is_playing)
-      })
-    })
-    // }
-  }
+  const [volume, setVolume] = React.useState(50)
+  const {
+    details: songInfo,
+    isPlaying,
+    pause,
+    play,
+    refresh,
+  } = useSongInfo(currentTrackId)
 
   const handlePlayPause = () => {
     spotifyApi.getMyCurrentPlaybackState().then((res) => {
       if (res.body?.is_playing) {
         spotifyApi
           .pause()
-          .then(() => {
-            setIsPlaying(false)
-          })
+          .then(pause)
           .catch((err) => {
             console.log('Something went wrong!', err)
           })
       } else {
         spotifyApi
           .play()
-          .then(() => {
-            setIsPlaying(true)
-          })
+          .then(play)
           .catch((err) => {
             console.log('Something went wrong!', err)
           })
@@ -63,51 +54,42 @@ export default function Player() {
     })
   }
 
-  const debouncedAdjustVolume = React.useCallback(
-    debounce((volume) => {
-      spotifyApi.setVolume(volume).catch((err) => {
-        console.log('Something went wrong!', err)
-      })
-    }, 500),
-    []
+  const debouncedAdjustVolume = React.useMemo(
+    () =>
+      debounce((volume) => {
+        spotifyApi.setVolume(volume).catch((err) => {
+          console.log('Something went wrong!', err)
+        })
+      }, 500),
+    [spotifyApi]
   )
 
   useEffect(() => {
     if (volume > 0 && volume < 100) {
       debouncedAdjustVolume(volume)
     }
-  }, [volume])
-
-  useEffect(() => {
-    if (spotifyApi.getAccessToken() && !currentTrackId) {
-      console.log('No current track, fetching...')
-      fetchCurrentTrack()
-      setVolume(50)
-    }
-  }, [currentTrackId, spotifyApi, session])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('Syncing devices...')
-      fetchCurrentTrack()
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [])
+  }, [volume, debouncedAdjustVolume])
 
   return (
     <div className="grid h-24 grid-cols-3 bg-gradient-to-b from-black to-gray-900 px-2 text-xs text-white md:px-8 md:text-base">
       {/* Left */}
-      <div className="flex items-center space-x-4">
-        <img
-          className="hidden h-10 w-10 md:inline"
-          src={songInfo?.album?.images?.[0].url}
-          alt=""
-        />
-        <div>
-          <h3>{songInfo?.name}</h3>
-          <p>{songInfo?.artists?.[0]?.name}</p>
+      {songInfo && (
+        <div className="flex items-center space-x-4">
+          {songInfo.album.images.length > 0 && (
+            <Image
+              className="hidden md:inline"
+              src={songInfo.album.images[0].url}
+              alt=""
+              width={160}
+              height={160}
+            />
+          )}
+          <div>
+            <h3>{songInfo.name}</h3>
+            <p>{songInfo.artists.length > 0 && songInfo.artists[0].name}</p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Center */}
       <div className="flex items-center justify-evenly">
@@ -122,7 +104,7 @@ export default function Player() {
           onClick={() => {
             spotifyApi
               .skipToPrevious()
-              .then(() => setTimeout(() => fetchCurrentTrack(), 500))
+              .then(() => setTimeout(refresh, 500))
               .catch((err) => console.log(err))
           }}
         />
@@ -136,7 +118,7 @@ export default function Player() {
           onClick={() => {
             spotifyApi
               .skipToNext()
-              .then(() => setTimeout(() => fetchCurrentTrack(), 500))
+              .then(() => setTimeout(refresh, 500))
               .catch((err) => console.log(err))
           }}
         />

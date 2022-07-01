@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
-import { useRecoilValue } from 'recoil'
-import { currentTrackIdState } from '../atoms/songAtom'
+import { useCallback, useEffect, useState } from 'react'
+import { useRecoilState, useRecoilValue } from 'recoil'
+
+import { currentTrackIdState, isPlayingState } from '../atoms/songAtom'
 import useSpotify from './useSpotify'
 
 interface ISongInfo {
+  id: string
   album: {
     images: {
       url: string
@@ -15,26 +17,42 @@ interface ISongInfo {
   name: string
 }
 
-export default function useSongInfo() {
+export default function useSongInfo(currentTrack: string) {
   const spotifyApi = useSpotify()
-  const currentTrack = useRecoilValue(currentTrackIdState)
   const [songInfo, setSongInfo] = useState<ISongInfo | null>(null)
+  const [isPlaying, setIsPlaying] = useRecoilState(isPlayingState)
+
+  const fetchCurrentTrack = useCallback(() => {
+    if (spotifyApi.getAccessToken() === null) return
+
+    spotifyApi.getMyCurrentPlayingTrack().then((res) => {
+      console.log('Song Info', songInfo)
+      console.log('Spotify', res.body.item)
+      setIsPlaying(res.body.is_playing)
+      if (res.body.item === null) return
+      if (songInfo?.id !== res.body.item.id) {
+        setSongInfo(res.body.item as SpotifyApi.TrackObjectFull)
+      }
+    })
+  }, [spotifyApi, setIsPlaying, songInfo])
+
+  const play = () => setIsPlaying(true)
+  const pause = () => setIsPlaying(false)
 
   useEffect(() => {
-    const fetchSongInfo = async () => {
-      if (currentTrack) {
-        const trackInfo = await fetch(
-          `https://api.spotify.com/v1/tracks/${currentTrack}`,
-          {
-            headers: { Authorization: `Bearer ${spotifyApi.getAccessToken()}` },
-          }
-        ).then((res) => res.json())
+    const interval = setInterval(() => {
+      console.log('Syncing devices...')
+      fetchCurrentTrack()
+    }, 5000)
 
-        setSongInfo(trackInfo)
-      }
+    if (songInfo === null) {
+      fetchCurrentTrack()
     }
 
-    fetchSongInfo()
-  }, [currentTrack, spotifyApi])
-  return songInfo
+    return () => clearInterval(interval)
+  }, [spotifyApi, fetchCurrentTrack, songInfo])
+
+  const refresh = fetchCurrentTrack
+
+  return { details: songInfo, isPlaying, play, pause, refresh }
 }
