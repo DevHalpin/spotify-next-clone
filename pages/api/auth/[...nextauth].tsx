@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-import spotifyApi, { LOGIN_URL } from '../../../lib/spotify'
+import spotifyApi from '../../../lib/spotify'
 
 interface SpotifyTokenInterface {
   session: {
@@ -41,6 +41,9 @@ const refreshAccessToken = async (token: any) => {
     }
   }
 }
+
+const scopes =
+  'user-read-recently-played user-read-playback-state user-top-read user-modify-playback-state user-read-currently-playing user-follow-read playlist-read-private user-read-email user-read-private user-library-read playlist-read-collaborative'
 // For more information on each option (and a full list of options) go to
 // https://next-auth.js.org/configuration/options
 export default NextAuth({
@@ -51,7 +54,7 @@ export default NextAuth({
       clientId: process.env.NEXT_PUBLIC_CLIENT_ID,
       // @ts-ignore
       clientSecret: process.env.NEXT_PUBLIC_CLIENT_SECRET,
-      authorization: LOGIN_URL,
+      authorization: { params: { scope: scopes } },
     }),
   ],
   // Database optional. MySQL, Maria DB, Postgres and MongoDB are supported.
@@ -65,7 +68,7 @@ export default NextAuth({
   // The secret should be set to a reasonably long random string.
   // It is used to sign cookies and to sign and encrypt JSON Web Tokens, unless
   // a separate secret is defined explicitly for encrypting the JWT.
-  secret: process.env.JWT_SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
 
   session: {
     // Use JSON Web Tokens for session instead of database sessions.
@@ -87,7 +90,7 @@ export default NextAuth({
   // https://next-auth.js.org/configuration/options#jwt
   jwt: {
     // A secret to use for key generation (you should set this explicitly)
-    secret: process.env.JWT_SECRET,
+    secret: process.env.NEXTAUTH_SECRET,
     // Set to true to use encryption (default: false)
     // encryption: true,
     // You can define your own encode/decode functions for signing and encryption
@@ -136,12 +139,10 @@ export default NextAuth({
             : 0,
         }
       }
-
       // return previous token if the access token has not expired
-      if (Date.now() < (token.accessTokenExpires as Number)) {
+      if (Date.now() < (token.accessTokenExpires as number)) {
         return token
       }
-
       return await refreshAccessToken(token)
     },
   },

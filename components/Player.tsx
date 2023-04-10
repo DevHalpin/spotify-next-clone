@@ -16,6 +16,7 @@ import Image from 'next/image'
 import React, { useCallback, useEffect } from 'react'
 import { useRecoilState } from 'recoil'
 import { currentTrackIdState, isPlayingState } from '../atoms/songAtom'
+import { deviceIdState } from '../atoms/deviceAtom'
 import useSongInfo from '../hooks/useSongInfo'
 import useSpotify from '../hooks/useSpotify'
 
@@ -24,6 +25,7 @@ export default function Player() {
   const { data: session, status } = useSession()
   const [currentTrackId, setCurrentTrackId] =
     useRecoilState<any>(currentTrackIdState)
+  const [deviceId, setDeviceId] = useRecoilState<any>(deviceIdState)
 
   const [volume, setVolume] = React.useState(50)
   const {
@@ -45,7 +47,7 @@ export default function Player() {
           })
       } else {
         spotifyApi
-          .play()
+          .play({ device_id: deviceId || undefined })
           .then(play)
           .catch((err) => {
             console.log('Something went wrong!', err)
@@ -57,8 +59,8 @@ export default function Player() {
   const debouncedAdjustVolume = React.useMemo(
     () =>
       debounce((volume) => {
-        spotifyApi.setVolume(volume).catch((err) => {
-          console.log('Something went wrong!', err)
+        spotifyApi.setVolume(volume,{ device_id: deviceId || undefined }).catch((err) => {
+          console.log('Something went wrong!', deviceId, err)
         })
       }, 500),
     [spotifyApi]
@@ -69,6 +71,16 @@ export default function Player() {
       debouncedAdjustVolume(volume)
     }
   }, [volume, debouncedAdjustVolume])
+
+  useEffect(() => {
+    const getDevice = async () => {
+    const {body} = await spotifyApi.getMyDevices()
+    const activeDevice = body.devices.find(device => {
+      return device.is_active === true})
+    setDeviceId(activeDevice? activeDevice.id : body.devices[0].id)  
+    }
+    getDevice()
+  }, [])
 
   return (
     <div className="grid h-24 grid-cols-3 bg-gradient-to-b from-black to-gray-900 px-2 text-xs text-white md:px-8 md:text-base">

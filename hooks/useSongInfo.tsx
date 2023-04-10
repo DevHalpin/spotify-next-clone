@@ -26,10 +26,14 @@ export default function useSongInfo(currentTrack: string) {
     if (spotifyApi.getAccessToken() === null) return
 
     spotifyApi.getMyCurrentPlayingTrack().then((res) => {
+      if (res.body === null) {
+        console.log("No info returned for current track, do we have an active device?") 
+        return
+      }
       console.log('Song Info', songInfo)
-      console.log('Spotify', res.body.item)
       setIsPlaying(res.body.is_playing)
       if (res.body.item === null) return
+      console.log('Spotify', res.body.item)
       if (songInfo?.id !== res.body.item.id) {
         setSongInfo(res.body.item as SpotifyApi.TrackObjectFull)
       }
